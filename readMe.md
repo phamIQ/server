@@ -1,119 +1,183 @@
-# Backend Setup & Run Guide
+# Phamiq Backend API Documentation
 
-## 1. Prerequisites
+## Overview
 
-- **Python 3.8+** (preferably Python 3.10 or newer)
-- **pip** (Python package manager)
-- **MongoDB** (if the backend uses a local MongoDB instance)
-- (Optional) **virtualenv** for isolated Python environments
-- (Optional) **Docker** if you want to run the backend in a container
+Phamiq is a comprehensive agricultural AI platform that provides crop disease classification, AI-powered recommendations, and multispectral analysis. The backend is built with FastAPI and offers a robust REST API for agricultural professionals and farmers.
 
----
+## Core Features
 
-## 2. Setup Instructions
+### **Crop Disease Classification**
+- **AI-Powered Detection**: Uses EfficientNetV2 model to classify 24 different crop diseases
+- **Supported Crops**: Cashew, Cassava, Maize, and Tomato
+- **Real-time Analysis**: Upload images and get instant disease predictions with confidence scores
+- **Comprehensive Results**: Returns top predictions with detailed disease information
 
-### a. Clone the Repository
+### **AI-Powered Recommendations**
+- **Free AI Integration**: Uses OpenRouter for cost-effective AI recommendations
+- **Disease Treatment Plans**: Get detailed treatment protocols for detected diseases
+- **Organic & Chemical Solutions**: Provides both organic and conventional treatment options
+- **Prevention Strategies**: Long-term prevention and monitoring recommendations
 
-```sh
-git clone <your-repo-url>
-cd phamiq/backend
-```
+### **Multispectral Analysis**
+- **Satellite Data Processing**: Analyzes multispectral satellite imagery
+- **Crop Suitability Assessment**: Determines optimal crop types for specific areas
+- **Environmental Indices**: Calculates NDVI and other vegetation indices
+- **Background Processing**: Handles large datasets asynchronously
 
-### b. Create and Activate a Virtual Environment (Recommended)
+### **User Management**
+- **Authentication**: JWT-based authentication system
+- **Google OAuth**: Social login integration
+- **User Profiles**: Personalized user accounts and settings
+- **Prediction History**: Track and manage past analyses
 
-```sh
-python -m venv venv
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
-```
+## API Endpoints
 
-### c. Install Python Dependencies
+### Authentication (`/auth`)
+- `POST /auth/register` - User registration
+- `POST /auth/login` - User login
+- `POST /auth/google` - Google OAuth login
+- `POST /auth/refresh` - Refresh access token
 
-```sh
-pip install --upgrade pip
-pip install -r requirements.txt
-```
+### Disease Prediction (`/predict`)
+- `POST /predict/` - Upload image for disease classification
+- `GET /predict/recommendations/{disease_name}` - Get AI recommendations for specific disease
+- `GET /predict/test-llm` - Test AI integration
+- `GET /predict/cache/stats` - Get recommendation cache statistics
+- `DELETE /predict/cache` - Clear recommendation cache
 
-### d. Set Up Environment Variables
+### Multispectral Analysis (`/predict/multispectral`)
+- `POST /predict/multispectral` - Analyze multispectral data synchronously
+- `POST /predict/multispectral/async` - Submit background analysis job
+- `GET /predict/multispectral/status/{job_id}` - Check job status
 
-Check if there is a `.env` file required (not present in the snapshot, but often needed). If not, check `app/config.py` for any required environment variables (like database URIs, secret keys, etc.). Create a `.env` file if needed.
+### AI Services (`/ai`)
+- `POST /ai/chat` - General AI chat
+- `POST /ai/disease-analysis` - Specialized disease analysis
+- `POST /ai/generate-title` - Generate content titles
+- `POST /ai/generate-description` - Generate content descriptions
+- `POST /ai/generate-image` - Generate images (placeholder)
+- `GET /ai/status` - Check AI service status
+- `GET /ai/test` - Test AI functionality
 
-Example `.env` (edit as needed):
+### User Management (`/user`)
+- `GET /user/profile` - Get user profile
+- `PUT /user/profile` - Update user profile
+- `GET /user/predictions` - Get user's prediction history
 
-```
-MONGO_URI=mongodb://localhost:27017/phamiq
+### History (`/history`)
+- `GET /history/` - Get prediction history
+- `DELETE /history/{prediction_id}` - Delete specific prediction
+- `GET /history/stats` - Get usage statistics
+
+### Discovery (`/discovery`)
+- `GET /discovery/posts` - Get discovery posts
+- `POST /discovery/posts` - Create new discovery post
+- `GET /discovery/posts/{post_id}` - Get specific post
+
+### Health & Status
+- `GET /` - API root and version info
+- `GET /health` - Health check endpoint
+- `GET /test-ai` - AI service test
+- `GET /ai-status` - Detailed AI service status
+
+## Technical Architecture
+
+### **Framework & Dependencies**
+- **FastAPI**: Modern, fast web framework for building APIs
+- **Uvicorn**: ASGI server for running FastAPI applications
+- **Pydantic**: Data validation and settings management
+- **Motor**: Async MongoDB driver
+- **OpenCV**: Image processing and computer vision
+- **ONNX Runtime**: Efficient model inference
+- **OpenAI/OpenRouter**: AI service integration
+
+### **Database**
+- **MongoDB**: NoSQL database for user data and prediction history
+- **Collections**: Users, Predictions, Analysis Jobs, Discovery Posts
+
+### **AI Models**
+- **EfficientNetV2**: Pre-trained model for crop disease classification
+- **24 Disease Classes**: Covering 4 major crops (Cashew, Cassava, Maize, Tomato)
+- **ONNX Format**: Optimized for production deployment
+
+### **Security Features**
+- **JWT Authentication**: Secure token-based authentication
+- **CORS Protection**: Cross-origin resource sharing configuration
+- **Input Validation**: Comprehensive request validation
+- **File Upload Limits**: Secure file handling with size restrictions
+
+## Environment Variables
+
+```env
+# Database
+MONGODB_URL=mongodb://localhost:27017/phamiq
+MONGODB_DB_NAME=phamiq
+
+# Authentication
 SECRET_KEY=your_secret_key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# AI Services
+OPENROUTER_API_KEY=your_openrouter_key
+
+# OAuth
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# Frontend
+FRONTEND_URL=http://localhost:3000
+SITE_URL=https://your-domain.com
+SITE_NAME=Phamiq
+
+# File Upload
+MAX_FILE_SIZE=1073741824  # 1GB
 ```
 
-### e. Start MongoDB
+## Deployment
 
-If you are running MongoDB locally, make sure it is running:
-
-```sh
-# On Windows, use MongoDB Compass or run:
-mongod
-```
-
-### f. Run the Backend Server
-
-You can start the backend server using the provided entry point. There are two common ways:
-
-#### Option 1: Using `run.py`
-
-```sh
-python run.py
-```
-
-#### Option 2: Using `uvicorn` (if FastAPI is used)
-
-If the backend uses FastAPI (likely, given the structure), you can run:
-
-```sh
-uvicorn app.main:app --reload
-```
-
-- `--reload` enables auto-reload on code changes (for development).
-- The default port is 8000. You can specify another port with `--port 8080`.
-
-### g. (Optional) Run with Docker
-
-If you prefer Docker, and a `Dockerfile` is present:
-
-```sh
+### **Docker Deployment**
+```bash
+# Build the image
 docker build -t phamiq-backend .
+
+# Run the container
 docker run -p 8000:8000 phamiq-backend
 ```
 
+### **Render Deployment**
+- Connect your GitHub repository to Render
+- Set the root directory to `/backend`
+- Configure environment variables in Render dashboard
+- Deploy automatically on code changes
+
+### **Local Development**
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the server
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+## API Documentation
+
+Once the server is running, you can access:
+- **Interactive API Docs**: `http://localhost:8000/docs`
+- **ReDoc Documentation**: `http://localhost:8000/redoc`
+- **OpenAPI Schema**: `http://localhost:8000/openapi.json`
+
+## Support & Contributing
+
+For technical support or to contribute to the project:
+1. Check the API documentation at `/docs`
+2. Review the health endpoints for service status
+3. Test AI integration using `/test-ai` endpoint
+
 ---
 
-## 3. Accessing the API
-
-- By default, the API will be available at:  
-  `http://localhost:8000`
-- If using FastAPI, interactive docs are at:  
-  `http://localhost:8000/docs`
-
----
-
-## 4. Project Structure (Backend)
-
-- `app/` – Main backend application
-  - `main.py` – Main entry point (FastAPI/Flask app)
-  - `config.py` – Configuration (env variables, settings)
-  - `db/` – Database connection logic
-  - `models/` – Data models and schemas
-  - `routes/` – API route definitions
-  - `services/` – Business logic/services
-- `run.py` – Alternate entry point to start the server
-- `requirements.txt` – Python dependencies
-- `Dockerfile` – For containerized deployment
-
----
-
-## 5. Troubleshooting
-
-- If you get a "ModuleNotFoundError", ensure your virtual environment is activated and dependencies are installed.
-- If MongoDB connection fails, check your `MONGO_URI` and ensure MongoDB is running.
-- For CORS or network issues, check FastAPI/Flask CORS settings in `main.py`.
+**Version**: 1.0.0  
+**Framework**: FastAPI  
+**Database**: MongoDB  
+**AI Integration**: OpenRouter (Free)  
+**Deployment**: Docker-ready for Render
